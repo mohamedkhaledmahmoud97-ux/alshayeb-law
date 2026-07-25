@@ -1,3 +1,5 @@
+<img width="1254" height="1254" alt="image" src="https://github.com/user-attachments/assets/fdba2dac-41d2-4e77-b1a6-31f821390a85" />
+
 # ALSHAYEB LAW
 
 **ALSHAYEB LAW** is an Egyptian Legal Retrieval-Augmented Generation (RAG) project focused on building, evaluating, and documenting a legally grounded AI assistant for Egyptian legal research.  
