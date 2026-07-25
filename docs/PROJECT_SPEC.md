@@ -8,9 +8,9 @@ Submitted in Partial Fulfilment of the Requirements for the Course
 |---|---|
 | Project | ALSHAYEB LAW — Egyptian Legal Retrieval-Augmented Generation Platform |
 | Version | 1.0 — Project Specification / Architecture Proposal Edition |
-| Institution | [Military Technical College] |
-| Programme | [iploma in Applied Artificial Intelligence and Data Analytics] |
-| Project Author | [Mohamed Khaled Mahmoud Ibrahim] |
+| Institution | Military Technical College |
+| Programme | iploma in Applied Artificial Intelligence and Data Analytics |
+| Project Author | Mohamed Khaled Mahmoud Ibrahim |
 | Supervisor | Dr. Ibrahim Basyouni |
 | Course | AI Tools |
 | Compliance | Evidence-First Architecture \| Citation Grounding \| Traceability \| Version Control |
