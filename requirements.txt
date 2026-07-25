@@ -1,0 +1,44 @@
+# ==========================
+# ALSHAYEB LAW Requirements
+# ==========================
+
+# Core AI
+langchain
+langchain-community
+langchain-core
+
+# Embeddings
+sentence-transformers
+
+# Vector Database
+faiss-cpu
+
+# LLM APIs
+openai
+
+# API
+fastapi
+uvicorn
+
+# Data Processing
+pandas
+numpy
+
+# Arabic NLP
+camel-tools
+
+# Configuration
+python-dotenv
+pydantic
+
+# Evaluation
+ragas
+
+# Utilities
+tqdm
+
+# Development
+pytest
+black
+isort
+flake8
