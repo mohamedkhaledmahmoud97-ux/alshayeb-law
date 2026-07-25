@@ -1,0 +1,53 @@
+[project]
+name = "alshayeb-law"
+version = "0.1.0"
+description = "Egyptian Legal Retrieval-Augmented Generation (RAG) System for Academic Benchmarking and Legal AI Research"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+authors = [
+    { name = "Mohamed Khaled" }
+]
+
+keywords = [
+    "rag",
+    "legal-ai",
+    "egyptian-law",
+    "nlp",
+    "information-retrieval",
+    "llm",
+    "benchmark",
+    "arabic"
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic"
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
+
+python_files = [
+    "test_*.py"
+]
+
+addopts = "-v"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
