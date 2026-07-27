@@ -1,0 +1,216 @@
+{
+  "validation_timestamp": "2026-07-27T14:59:47.742850+00:00",
+  "overall_status": "PASS",
+  "total_checks": 9,
+  "passed": 9,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "Index load integrity",
+      "passed": true,
+      "message": "Loaded: ntotal=8340, dim=1024",
+      "detail": {
+        "ntotal": 8340,
+        "d": 1024,
+        "path": "D:\\alshayeb-law\\outputs\\faiss\\index.faiss"
+      }
+    },
+    {
+      "name": "Vector count",
+      "passed": true,
+      "message": "ntotal=8340 == expected=8340",
+      "detail": {
+        "ntotal": 8340,
+        "expected": 8340
+      }
+    },
+    {
+      "name": "Embedding dimension",
+      "passed": true,
+      "message": "dim=1024 == expected=1024",
+      "detail": {
+        "d": 1024,
+        "expected": 1024
+      }
+    },
+    {
+      "name": "Metadata alignment",
+      "passed": true,
+      "message": "metadata count=8340 == ntotal=8340",
+      "detail": {
+        "metadata_count": 8340,
+        "ntotal": 8340
+      }
+    },
+    {
+      "name": "Orphan metadata check",
+      "passed": true,
+      "message": "All 8340 entries have valid chunk_id",
+      "detail": {
+        "total": 8340
+      }
+    },
+    {
+      "name": "Manifest consistency",
+      "passed": true,
+      "message": "All 14 manifest fields consistent",
+      "detail": {
+        "manifest_fields": [
+          "model_name",
+          "embedding_dimension",
+          "total_chunks",
+          "total_vectors",
+          "index_type",
+          "normalization",
+          "adr_015_applied",
+          "normalizer",
+          "corpus_source",
+          "created_at",
+          "index_checksum_sha256",
+          "metadata_checksum_sha256",
+          "batch_size",
+          "device"
+        ]
+      }
+    },
+    {
+      "name": "Index search integrity",
+      "passed": true,
+      "message": "Search OK: top-10 results, scores in [0.0000, 0.0000]",
+      "detail": {
+        "k": 10,
+        "distances_shape": [
+          1,
+          10
+        ],
+        "indices_shape": [
+          1,
+          10
+        ],
+        "score_range": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "Metadata field presence",
+      "passed": true,
+      "message": "All 8340 entries contain 14 expected fields",
+      "detail": {
+        "expected_fields": [
+          "article_number",
+          "chunk_id",
+          "law_number",
+          "law_slug",
+          "law_year",
+          "node_id",
+          "scope_flag",
+          "section",
+          "seq",
+          "source_id",
+          "source_type",
+          "text",
+          "title",
+          "token_count"
+        ],
+        "entry_count": 8340
+      }
+    },
+    {
+      "name": "Retrieval smoke test",
+      "passed": true,
+      "message": "All 5 smoke test queries returned valid results",
+      "detail": {
+        "queries": [
+          {
+            "query": "أحكام القانون المدني المصري",
+            "top_scores": [
+              0.5714855790138245,
+              0.5641977787017822,
+              0.5607344508171082,
+              0.5561389923095703,
+              0.5554569959640503
+            ],
+            "top_chunk_ids": [
+              "statute:law-100-1964:promulgation:artX1:seq25",
+              "statute:law-131-1948:promulgation:artX1:seq2",
+              "statute:law-143-1994:promulgation:artX1:seq3",
+              "statute:law-27-1994:promulgation:artX1:seq1",
+              "statute:law-143-1994:promulgation:artX1:seq15"
+            ]
+          },
+          {
+            "query": "نطاق تطبيق قانون العقوبات",
+            "top_scores": [
+              0.6237348318099976,
+              0.616915225982666,
+              0.6012085676193237,
+              0.60113924741745,
+              0.5969299077987671
+            ],
+            "top_chunk_ids": [
+              "statute:law-778088:promulgation:artX1:seq2",
+              "statute:law-175-2018:promulgation:artX1:seq5",
+              "statute:law-28-1981:promulgation:artX1:seq71",
+              "statute:law-48-1941:promulgation:artX1:seq7",
+              "statute:law-58-1937:promulgation:artX1:seq52"
+            ]
+          },
+          {
+            "query": "قواعد الإجراءات الجنائية",
+            "top_scores": [
+              0.6161842346191406,
+              0.6103081107139587,
+              0.5997244119644165,
+              0.5943843126296997,
+              0.5915684700012207
+            ],
+            "top_chunk_ids": [
+              "statute:law-22-2018:promulgation:artX1:seq4",
+              "statute:law-174-2025:main:art327:seq1",
+              "statute:law-22-2018:promulgation:artX1:seq1",
+              "statute:law-150-1950:promulgation:artX1:seq1",
+              "statute:law-46-1972:promulgation:artX1:seq3"
+            ]
+          },
+          {
+            "query": "الأحكام العامة للعقود",
+            "top_scores": [
+              0.6097561120986938,
+              0.6030573844909668,
+              0.5882248878479004,
+              0.5840461254119873,
+              0.5822820663452148
+            ],
+            "top_chunk_ids": [
+              "statute:law-7846118:promulgation:artX1:seq11",
+              "statute:law-2278400:promulgation:artX1:seq2",
+              "statute:law-14-2025:main:art212:seq1",
+              "statute:law-3991095:promulgation:artX1:seq10",
+              "statute:law-67-2010:promulgation:artX1:seq1"
+            ]
+          },
+          {
+            "query": "تنظيم حق العمل",
+            "top_scores": [
+              0.6069471836090088,
+              0.592423141002655,
+              0.5895441174507141,
+              0.5874191522598267,
+              0.5803312063217163
+            ],
+            "top_chunk_ids": [
+              "statute:law-14-2025:main:art33:seq1",
+              "statute:law-10-2018:promulgation:artX1:seq12",
+              "statute:law-213-2017:promulgation:artX1:seq19",
+              "statute:law-12-2003:promulgation:artX1:seq6",
+              "statute:law-14-2025:main:art46:seq1"
+            ]
+          }
+        ],
+        "k": 5
+      }
+    }
+  ]
+}
