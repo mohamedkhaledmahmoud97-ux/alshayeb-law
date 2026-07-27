@@ -6,6 +6,51 @@ The project follows the principles of semantic versioning where applicable.
 
 ---
 
+# Version 0.10.0 — Phase 5: Reranker Integration
+
+**Status**
+
+Released
+
+**Date**
+
+July 2026
+
+## Added
+
+- **`src/reranking/__init__.py`**: Package init with module docstring. Exports `BGEReranker`, `Reranker`, `RerankerResult`.
+
+- **`src/reranking/bge_reranker.py`**: BGE Cross-Encoder wrapper for `BAAI/bge-reranker-v2-m3`. Provides:
+  - `score()` — compute pairwise similarity scores for query + candidate pairs
+  - `rerank()` — compute scores for query + candidate list and return sorted (score, index) pairs
+  - Device auto-selection (CUDA if available, else CPU)
+  - Configurable batch size (default 8)
+  - ADR-015 compliance note: caller must apply `normalize_arabic()` before scoring
+
+- **`src/reranking/reranker.py`**: Reranker orchestration class with:
+  - `rerank()` — accepts query string + candidate dicts/texts
+  - Combined scoring: `alpha * reranker_score + (1-alpha) * retrieval_score`
+  - `RerankerResult` dataclass (candidate_index, chunk_id, text, retrieval_score, reranker_score, combined_score, rank, type_metadata preserving original scores)
+  - Configurable alpha (default 0.7) — controls reranker weight vs retrieval weight
+  - ADR-015: `normalize_arabic()` applied to query and candidate text before scoring; normalized text never persisted
+
+- **`scripts/run_reranker_demo.py`**: CLI demo entry point with test queries and candidates. Same coding style as `run_embedding_pipeline.py`:
+  - Same sys.path fix, same logging config, same argparse pattern
+  - `--alpha`, `--device`, `--batch-size`, `--top-k` options
+
+## Design Integrity
+
+All Phase 5 components follow the same architecture patterns established in Phase 4:
+- BGEReranker: same model-load pattern as BGEEncoder, same device auto-selection, same error handling
+- Reranker orchestrator: accepts FAISS metadata dicts directly (compatible with retriever output), preserves original scores in type_metadata
+- CLI script: same sys.path fix, same logging config, same argparse pattern as `run_embedding_pipeline.py`
+
+## Approval Gate
+
+Phase 5 implementation complete. Retrieval Engine (Phase 4 Step 5) required before live integration testing.
+
+---
+
 # Version 0.9.2 — Phase 4 Step 4: FAISS Validation
 
 **Status**
