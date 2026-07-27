@@ -1,0 +1,16 @@
+{
+  "model_name": "BAAI/bge-m3",
+  "embedding_dimension": 1024,
+  "total_chunks": 8340,
+  "total_vectors": 8340,
+  "index_type": "IndexFlatIP",
+  "normalization": "L2",
+  "adr_015_applied": true,
+  "normalizer": "src.preprocessing.arabic_normalizer.normalize_arabic",
+  "corpus_source": "D:\\alshayeb-law\\outputs\\canonical\\chunks.jsonl",
+  "created_at": "2026-07-27T13:38:12.895336+00:00",
+  "index_checksum_sha256": "aa17d79fc8d451555df1dbc9fcd7edb6db8e8955962f43155d192bdb82c71944",
+  "metadata_checksum_sha256": "5fc7e04f3d2f9ca7f32ce62766b2aa5658e0756eacf2d91180595a8096aa4726",
+  "batch_size": 32,
+  "device": "cpu"
+}

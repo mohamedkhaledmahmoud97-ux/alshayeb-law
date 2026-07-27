@@ -12,6 +12,7 @@ BENCHMARKS_DIR = PROJECT_ROOT / "benchmarks"
 DOCS_DIR = PROJECT_ROOT / "docs"
 OUTPUTS_DIR = PROJECT_ROOT / "outputs"
 CANONICAL_STORE_DIR = OUTPUTS_DIR / "canonical"
+FAISS_STORE_DIR = OUTPUTS_DIR / "faiss"
 
 # Canonical dataset file (single source of truth — do not use the two redundant copies)
 STATUTE_DATASET = DATASETS_DIR / "Egyptian_legal_laws.json"
