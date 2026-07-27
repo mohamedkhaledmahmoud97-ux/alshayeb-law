@@ -6,6 +6,43 @@ The project follows the principles of semantic versioning where applicable.
 
 ---
 
+# Version 0.9.2 — Phase 4 Step 4: FAISS Validation
+
+**Status**
+
+Released
+
+**Date**
+
+July 2026
+
+## Added
+
+- **`src/embeddings/faiss_validator.py`**: Comprehensive FAISS index validator with 9 independent checks:
+  - Index load integrity — verifies FAISS file exists and loads correctly
+  - Vector count — verifies ntotal == 8,340 (expected chunk count)
+  - Embedding dimension — verifies d == 1024 (BGE-M3 output)
+  - Metadata alignment — verifies len(metadata_list) == FAISS ntotal
+  - Orphan metadata check — verifies every metadata entry has valid chunk_id
+  - Manifest consistency — verifies checksums, counts, dimensions match actual files
+  - Index search integrity — verifies search returns correct shape and valid indices
+  - Metadata field presence — verifies all 14 expected chunk fields present in every entry
+  - Retrieval smoke test — runs 5 Arabic legal queries and validates results
+
+- **`scripts/validate_faiss.py`**: CLI entry point with `--verbose`, `--quiet`, `--exit-on-fail` options. Writes machine-readable JSON report to `outputs/faiss/validation_report.json`.
+
+- **`outputs/faiss/validation_report.json`**: Machine-readable validation report produced by `scripts/validate_faiss.py`.
+
+## Validation Result
+
+All 9 checks PASS. Phase 4 Step 4 complete. Step 5 — Retrieval Engine cleared to begin.
+
+## Approval Gate
+
+Phase 4 Step 4 complete. Step 5 — Retrieval Engine cleared to begin.
+
+---
+
 # Version 0.9.1 — Phase 4 Step 2: Data Profiling Statistical Analysis Report
 
 **Status**

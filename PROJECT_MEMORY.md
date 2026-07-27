@@ -465,11 +465,12 @@ Priority order:
 3. ~~Create metadata extractor~~ ✅
 4. ~~Build chunking module~~ ✅
 5. ~~QA & Validation~~ ✅
-6. Generate embeddings (BAAI/BGE-M3 on chunks.jsonl) ← NEXT
-7. Build FAISS index
-8. Implement retriever
-9. Connect the LLM
-10. Evaluate retrieval quality
+6. ~~Generate embeddings (BAAI/BGE-M3 on chunks.jsonl)~~ ✅
+7. ~~Build FAISS index~~ ✅
+8. ~~FAISS Validation~~ ✅
+9. Implement retriever ← NEXT
+10. Connect the LLM
+11. Evaluate retrieval quality
 
 ---
 
