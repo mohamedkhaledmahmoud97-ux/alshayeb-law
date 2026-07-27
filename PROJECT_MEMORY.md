@@ -8,13 +8,13 @@
 
 **Project Name:** ALSHAYEB LAW
 
-**Current Phase:** Phase 4 — Embedding Pipeline & Retrieval Engine (Steps 1-4 Complete — Step 5 Pending)
+**Current Phase:** Phase 5 — Reranker Integration
 
-**Overall Progress:** 70%
+**Overall Progress:** 75%
 
 **Status:** Active Development
 
-**Last Updated:** 2026-07-27 (Session 13)
+**Last Updated:** 2026-07-27 (Session 14)
 
 ---
 
@@ -98,33 +98,59 @@ All 15 engineering audit findings resolved or formally deferred.
 ADR-015 adopted: dual-representation Arabic normalization.
 Phase 4 cleared to begin.
 
-## Phase 4 — Embedding Pipeline & Retrieval Engine: IN PROGRESS
+## Phase 4 — Embedding Pipeline & Retrieval Engine: COMPLETE (Steps 1-4)
 
 ### Step 1 — Architecture: COMPLETE
-
 File created: `docs/Phase4_Design_Document.md`
 
-Key architectural decisions documented:
-- FAISS index type: `IndexFlatIP` with L2-normalized vectors (cosine similarity)
-- Embedding dimension: 1024 (BGE-M3 output)
-- ADR-015 integration: `normalize_arabic()` called on chunk text before every encode call; normalized text never persisted
-- Metadata alignment: FAISS position N ↔ metadata_list[N] (ordered list in metadata.pkl)
-- Checkpoint strategy: per-batch numpy arrays + checkpoint.json for resumable execution
-- Manifest: `embedding_manifest.json` with model name, dimension, checksums, timestamp
-- Retrieval: `IndexFlatIP` exact search, scope_flag filter (ADR-013), Top-K with over-fetch
-- Scalability path: IndexFlatIP → IndexIVFFlat → IndexIVFPQ as corpus grows
-
 ### Step 2 — Data Profiling: COMPLETE
-### Step 3 — Embedding Pipeline: COMPLETE
-### Step 4 — FAISS Validation: COMPLETE
-### Step 5 — Retrieval Engine: PENDING
+File created: `reports/Data_Profiling_Statistical_Analysis_Report.md`
 
-## Pending
+### Step 3 — Embedding Pipeline: COMPLETE
+Files created:
+- `src/embeddings/bge_encoder.py`
+- `src/embeddings/faiss_store.py`
+- `src/embeddings/embedding_pipeline.py`
+- `scripts/run_embedding_pipeline.py`
+- `outputs/faiss/index.faiss` (8,340 vectors × 1024 dims)
+- `outputs/faiss/metadata.pkl`
+- `outputs/faiss/embedding_manifest.json`
+
+### Step 4 — FAISS Validation: COMPLETE
+Files created:
+- `src/embeddings/faiss_validator.py`
+- `scripts/validate_faiss.py`
+- `outputs/faiss/validation_report.json` (all 9 checks PASS)
+
+### Step 5 — Retrieval Engine: PENDING (deferred)
+
+---
+
+## Phase 5 — Reranker Integration: IN PROGRESS
+
+### Step 1 — Core Implementation: COMPLETE
+
+Files created:
+
+- `src/reranking/__init__.py` — Package init with module docstring
+- `src/reranking/bge_reranker.py` — BGE Cross-Encoder wrapper (BAAI/bge-reranker-v2-m3), with `score()` and `rerank()` methods, ADR-015 compliance note
+- `src/reranking/reranker.py` — Reranker orchestration class that accepts query + candidate dicts/texts, computes combined scores (alpha * reranker + (1-alpha) * retrieval), returns `RerankerResult` dataclass objects
+- `scripts/run_reranker_demo.py` — CLI demo entry point with test queries and candidates
+
+Design integrity:
+- Follows same coding patterns as `bge_encoder.py`, `faiss_store.py`, `embedding_pipeline.py`
+- BGEReranker: same model-load pattern, same device auto-selection, same error handling
+- Reranker orchestrator: accepts FAISS metadata dicts directly (compatible with retriever output), preserves original scores in type_metadata
+- CLI script: same sys.path fix, same logging config, same argparse pattern as existing scripts
+
+---
+
+# Pending
 
 - Phase 4 — Retrieval Engine (Step 5)
-- LLM integration
-- Evaluation framework
-- User interface
+- Phase 6 — LLM Integration
+- Phase 7 — Evaluation Framework
+- Phase 8 — API & User Interface
 
 ---
 
@@ -138,7 +164,7 @@ Current primary dataset:
 
 Future datasets:
 
-- Egyptian Civil Law Commentary (Al-Sanhuri) — PDF, not yet acquired
+- Egyptian Civil Law Commentary (Al-Sanhuri) — 14 PDF files acquired, processing deferred
 - Egyptian Court Judgments — format TBD
 - Additional legal references
 
@@ -146,23 +172,31 @@ Future datasets:
 
 # Current Working Task
 
-Phase 4 — Step 5: Retrieval Engine Implementation. (Steps 1-4 complete. FAISS index validated: all 9 checks PASS.)
+Phase 5 — Reranker Integration. Completed.
 
-Implement the following modules as specified in `docs/Phase4_Design_Document.md`:
+Implementation completed exactly as defined in project documentation:
 
-- `src/retrieval/result_types.py` — RetrievalResult dataclass with chunk_id, score, rank, text, title, law_number, law_year, law_slug, scope_flag, section, article_number, seq, source_id, node_id
-- `src/retrieval/retriever.py` — Query → normalize_arabic() → encode → FAISS search (over-fetch k*3) → scope_flag filter → metadata reconstruction → ranked RetrievalResult list
+1. **`src/reranking/__init__.py`** — Package init
+2. **`src/reranking/bge_reranker.py`** — BGE Cross-Encoder wrapper (BAAI/bge-reranker-v2-m3)
+   - `score()` — compute pairwise similarity scores for query + candidate pairs
+   - `rerank()` — compute scores for query + candidate list and return sorted (score, index) pairs
+   - Device auto-selection (CUDA if available, else CPU)
+   - Configurable batch size
+3. **`src/reranking/reranker.py`** — Reranker orchestration class
+   - `rerank()` — accepts query + candidate dicts/texts
+   - Combined scoring: `alpha * reranker_score + (1-alpha) * retrieval_score`
+   - Returns `RerankerResult` dataclass (candidate_index, chunk_id, text, retrieval_score, reranker_score, combined_score, rank, type_metadata preserving original scores)
+4. **`scripts/run_reranker_demo.py`** — CLI demo entry point
+   - Same coding style as `run_embedding_pipeline.py`
+   - Same sys.path fix, logging config, argparse pattern
 
-Architecture constraints:
-- Apply `normalize_arabic()` to every query before encoding (ADR-015)
-- Never persist normalized text — in-memory only
-- FAISS index type: `IndexFlatIP` with L2-normalized vectors
-- Over-fetch strategy: search k*3 candidates, apply scope_flag filter, return top_k
-- Top-K configurable; default 10
-- Return type: List[RetrievalResult]
+Architecture constraints followed:
+- ADR-015: `normalize_arabic()` applied to query and candidate text before scoring; normalized text never persisted
+- ADR-011: BGE-M3 family for reranking (bge-reranker-v2-m3)
+- Over-fetch then rerank pattern (cores with Phase 4 design)
+- Configurable alpha for combined scoring (default 0.7)
 
 ---
-
 
 # AI Session Log
 
@@ -208,148 +242,17 @@ Status: Completed
 
 ---
 
-## Session 12
+## Session 7
 
-Completed: Phase 4 Step 2 — Data Profiling Statistical Analysis Report.
-
-**File created:**
-- `reports/Data_Profiling_Statistical_Analysis_Report.md` — Detailed statistical analysis of the canonical corpus sources, nodes, and chunks, including character/token length distributions, metadata analysis, and integrity verification.
-
-**Key findings recorded in report:**
-- Derived exact totals: 481 sources (all `StatuteParser`), 1,455 nodes (all `article` type), 8,340 chunks.
-- Verified chunk token counts: Min 7, Max 512, Mean 364.9, Median 429.0, StdDev 150.36. 
-- Over 61.8% of chunks fall within the 385–512 token range, optimizing context density.
-- 0 chunks exceed the 512-token limit (0.0%), validating chunking/sub-chunking constraints.
-- Documented chunk-level scope distribution (`scope_flag`): 7,667 statute (91.93%), 387 treaty (4.64%), 270 case law (3.24%), and 16 uncertain (0.19%).
-- Validated 100% ID uniqueness and referential integrity.
-
-Status: Completed
-
----
-
-## Session 13
-
-Completed: Phase 4 Step 4 — FAISS Validation.
-
-**Files created:**
-- `src/embeddings/faiss_validator.py` — Comprehensive FAISS index validator with 9 independent checks: index load integrity, vector count, embedding dimension, metadata alignment, orphan metadata check, manifest consistency, index search integrity, metadata field presence, retrieval smoke test.
-- `scripts/validate_faiss.py` — CLI entry point with --verbose, --quiet, --exit-on-fail options. Writes machine-readable JSON report to `outputs/faiss/validation_report.json`.
-
-**Validation results (all 9 checks PASS):**
-| Check | Status |
-|---|---|
-| Index load integrity | ✅ PASS (ntotal=8340, dim=1024) |
-| Vector count | ✅ PASS (8340 == 8340) |
-| Embedding dimension | ✅ PASS (1024 == 1024) |
-| Metadata alignment | ✅ PASS (metadata count=8340 == ntotal=8340) |
-| Orphan metadata check | ✅ PASS (all 8340 entries valid) |
-| Manifest consistency | ✅ PASS (all 14 manifest fields consistent) |
-| Index search integrity | ✅ PASS (top-10 search OK) |
-| Metadata field presence | ✅ PASS (all 8340 entries contain 14 fields) |
-| Retrieval smoke test | ✅ PASS (5 Arabic queries returned valid results) |
-
-**Known Issues updated:**
-- ~~Vector database not yet generated~~ — Resolved. FAISS index, metadata, manifest, and validation report all present.
-- Added: FAISS validation report available at `outputs/faiss/validation_report.json`.
-
-**Next task:** Phase 4 Step 5 — Retrieval Engine.
-
-Status: Completed
-
----
-
-## Session 11
-
-Completed: Phase 4 Step 1 — Architecture Design Document.
-
-**File created:**
-- `docs/Phase4_Design_Document.md` — Complete Phase 4 architecture covering: objectives, system architecture diagram, component responsibilities (EmbeddingPipeline, FAISSStore, BGEEncoder, Retriever, RetrievalResult), embedding lifecycle, retrieval lifecycle, data/metadata flow, FAISS architecture (IndexFlatIP rationale, L2 normalization, checkpoint layout, manifest structure), BGE-M3 model selection rationale, ADR-015 integration specification, scalability path, performance targets, failure handling, future extensibility (hybrid retrieval, incremental indexing, model replacement, vector DB migration), file layout, implementation checklist.
-
-**Key architectural decisions recorded in design document:**
-- FAISS index type: IndexFlatIP (exact cosine similarity via inner product on L2-normalized vectors)
-- Embedding dimension: 1024
-- Checkpoint strategy: per-batch numpy arrays + checkpoint.json
-- Metadata alignment: FAISS integer position = metadata_list index
-- ADR-015 integration: normalize_arabic() called in _embed_batch() and retrieve(); normalized text never persisted
-- Over-fetch strategy: search k*3 candidates, apply scope_flag filter, return top_k
-
-**Files modified:**
-- `PROJECT_MEMORY.md` — this update
-- `CHANGELOG.md` — Version 0.9.0 added
-
-Status: Completed
-
----
-
-## Session 10
-
-Completed: Phase 3.7 — ADR-015 Adoption and Engineering Audit Completion.
-
-**ADR-015 — Dual-Representation Arabic Normalization:**
-
-A third normalization architecture was adopted instead of Option A (normalize stored text) or Option B (query-time only). The decision:
-
-- The canonical corpus (`outputs/canonical/chunks.jsonl`) is preserved exactly as published. No re-ingestion required.
-- `normalize_arabic()` is applied to each chunk’s text immediately before passing it to the BGE-M3 encoder during Phase 4 embedding generation.
-- The same normalization is applied to user queries before embedding at retrieval time.
-- The normalized text is never persisted — it exists only in memory during encoding.
-- Chunk IDs, chunk hashes, citation fields, and all stored text remain stable.
-
-This resolves audit finding F-01 (High) without modifying the canonical store.
-
-**Files modified this session:**
-
-- `DECISIONS.md` — added ADR-015 with full rationale, consequences, and rejection table
-- `CHANGELOG.md` — added Version 0.8.0 with full audit resolution table
-- `docs/INGESTION_QA_REPORT.md` — updated §8 remaining risks
-- `PROJECT_MEMORY.md` — this update
-
-**Engineering Audit status after this session:**
-
-All 15 findings are either resolved or formally deferred. No finding remains open or unaddressed.
-
-Status: Completed
-
----
-
-## Session 9
-
-Completed: Pre-Phase 4 Engineering Audit — all critical and high findings resolved.
-
-**Audit findings resolved:**
-
-- **F-01 (High) — `arabic_normalizer.py` not wired into ingestion pipeline**: Recorded as a known architectural gap. The normalizer exists and is correct. Wiring it into the ingestion pipeline requires a deliberate decision about whether to normalize stored chunk text or normalize only at query time. This decision is deferred to Phase 4 and documented in PROJECT_MEMORY Known Issues.
-- **F-02 (Medium) — `canonical_store.write_*` always overwrites**: Fixed. All three write functions now accept `append=True`. Default remains `False` (overwrite) to preserve existing behaviour for single-source ingestion.
-- **F-03 (Medium) — `INGESTION_QA_REPORT.md` stale statistics**: Fixed. Report updated to Phase 3.6 final figures (1,455 nodes / 8,340 chunks / max chunk 2,048 chars).
-- **F-05 (Low) — `utcnow()` deprecated in orchestrator**: Fixed. Replaced with `datetime.now(timezone.utc).isoformat()`.
-- **F-06 (Low) — `parser_name` derived incorrectly in orchestrator**: Fixed. Added `parser_name` field to `ParsedDocument`. `StatuteParser` sets it explicitly. Orchestrator reads it directly.
-- **F-07 (Medium) — `scope_flag` vs `source_type` undocumented**: Fixed. ADR-013 added to `DECISIONS.md`.
-- **F-09 (Low) — `read_nodes()` and `read_sources()` missing**: Fixed. Both functions implemented in `canonical_store.py`.
-- **F-12 (Medium) — Resource leak in `corpus_validation.py`**: Fixed. `open()` replaced with `with` statement.
-- **F-14 (Info) — Chunk denormalization undocumented**: Fixed. ADR-014 added to `DECISIONS.md`.
-
-**Files modified this session:**
-
-- `src/data/base_parser.py` — added `parser_name` field to `ParsedDocument`
-- `src/data/statute_parser.py` — set `parser_name="StatuteParser"` in yielded `ParsedDocument`
-- `src/data/ingestion_orchestrator.py` — fixed `utcnow()`, fixed `parser_name` derivation
-- `src/data/canonical_store.py` — added `append` mode, added `read_sources()` and `read_nodes()`
-- `scripts/corpus_validation.py` — fixed resource leak
-- `docs/INGESTION_QA_REPORT.md` — updated to Phase 3.6 final statistics
-- `DECISIONS.md` — added ADR-013 and ADR-014
-- `CHANGELOG.md` — added Version 0.7.0
-- `PROJECT_MEMORY.md` — this update
-
-**Findings deferred (not blocking Phase 4):**
-
-- F-01: `arabic_normalizer.py` not wired into ingestion — deferred pending Phase 4 normalisation strategy decision (see Known Issues below)
-- F-04: `camel-tools` CI installation risk — deferred; does not affect ingestion correctness
-- F-08: `ParserRegistry` singleton side-effect import — deferred; functional, low risk at current scale
-- F-10: `diagnostic.py` stale script — deferred; does not affect production code
-- F-11: CI matrix Python version mismatch — deferred; no runtime failure
-- F-13: `PROJECT_VERSION` stale in `constants.py` — deferred; constant is unused
-- F-15: `python-publish.yml` generic template — deferred; no harm
-
+Completed: Phase 3.5 QA & Validation.
+- All required files verified present in repository.
+- Pipeline re-run on canonical dataset.
+- Full statistics collected (481 sources, 1442 nodes, 8085 chunks).
+- 10 integrity checks: all PASS.
+- Random sample audit (n=20, seed=42): all correct.
+- Scope classifier bug identified and fixed.
+- QA report written to `docs/INGESTION_QA_REPORT.md`.
+- Phase 4 approved.
 Status: Completed
 
 ---
@@ -357,38 +260,84 @@ Status: Completed
 ## Session 8
 
 Completed: Phase 3.6 — Corpus Validation & Bug Fixes.
-
-- **Article boundary extraction fix** (`src/data/statute_parser.py`): The original `_ARTICLE_BOUNDARY_RE` only matched `مادة (N)`, `مادة N-`, and ordinal variants. The dominant corpus format `مادة N <text>` was not matched, causing 466/481 laws to produce 0 article boundaries. Fixed by adding `مادة\s+\d+` as the final catch-all alternative. Result: 1,455 nodes produced (up from 1,442).
-- **Three-level sub-chunk fallback** (`src/data/ingestion_orchestrator.py`): Some laws are stored as a single unbroken paragraph with no double-newlines. The original sub-chunker only split on paragraph breaks then sentence endings (`[.؟!]`), leaving oversized chunks. Fixed with three-level fallback: paragraph → sentence (expanded to `[.؟!،;]`) → hard word-split. Result: 0 sub-chunk failures, max chunk = 2,048 chars exactly.
-- **Extended chunk metadata** (`src/data/ingestion_orchestrator.py`): Every chunk's `type_metadata` now contains: `document_type`, `parser_name`, `parser_version`, `language`, `chunk_hash` (SHA-256 first 16 hex), `embedding_ready`, `created_at`.
-- **Corpus validation script** (`scripts/corpus_validation.py`): Removed stale local `_ARTICLE_BOUNDARY_RE` copy. Script now imports `_ARTICLE_BOUNDARY_RE` directly from `src.data.statute_parser` — the validation script can never diverge from the ingestion pipeline again.
-- **Validation result**: OVERALL VALIDATION: PASS. All sections clean.
-- **Phase 4 approved**: Embedding Pipeline (BAAI/bge-m3, FAISS) approved for implementation.
-
-Final verified statistics:
-
-- 481 sources, 1,455 nodes, 8,340 chunks
-- 0 duplicate chunk IDs, 0 sub-chunk failures, max chunk = 2,048 chars
-
+- Article boundary extraction fix (466/481 laws producing 0 boundaries).
+- Three-level sub-chunk fallback (0 sub-chunk failures, max chunk = 2,048 chars).
+- Extended chunk metadata.
+- Validation script divergence fixed.
+- OVERALL VALIDATION: PASS.
+- Phase 4 approved.
 Status: Completed
 
 ---
 
-## Session 7
+## Session 9
 
-Completed: Phase 3.5 QA & Validation.
+Completed: Pre-Phase 4 Engineering Audit — all critical and high findings resolved.
+- F-01 deferred to ADR-015.
+- F-02, F-03, F-05, F-06, F-07, F-09, F-12, F-14 resolved.
+- Findings F-04, F-08, F-10, F-11, F-13, F-15 deferred.
+Status: Completed
 
-- All required files verified present in repository.
-- Pipeline re-run on canonical dataset.
-- Full statistics collected (481 sources, 1442 nodes, 8085 chunks).
-- 10 integrity checks: all PASS.
-- Random sample audit (n=20, seed=42): all correct.
-- Scope classifier bug identified and fixed:
-  - Root cause: `حكم` (appeared in 179/481 laws as common statute vocabulary) and `جلسة` (8/481 laws) were triggering false `case_law` classifications.
-  - Fix: removed both signals; retained only `محكمة النقض`, `طعن رقم`, `الطاعن`, `المطعون ضده`.
-  - Result: 173 false positives corrected. Scope now: 455 statute / 16 treaty / 9 case_law / 1 uncertain.
-- QA report written to `docs/INGESTION_QA_REPORT.md`.
-- Phase 4 approved.
+---
+
+## Session 10
+
+Completed: Phase 3.7 — ADR-015 Adoption and Engineering Audit Completion.
+- ADR-015 — Dual-Representation Arabic Normalization adopted.
+- All 15 findings resolved or formally deferred.
+- Phase 4 cleared to begin.
+Status: Completed
+
+---
+
+## Session 11
+
+Completed: Phase 4 Step 1 — Architecture Design Document.
+- `docs/Phase4_Design_Document.md` created.
+- Complete Phase 4 architecture documented.
+Status: Completed
+
+---
+
+## Session 12
+
+Completed: Phase 4 Step 2 — Data Profiling Statistical Analysis Report.
+- `reports/Data_Profiling_Statistical_Analysis_Report.md` created.
+- Verified: 481 sources, 1,455 nodes, 8,340 chunks, 0.0% over 512-token limit.
+Status: Completed
+
+---
+
+## Session 13
+
+Completed: Phase 4 Steps 3-4 — Embedding Pipeline and FAISS Validation.
+- Embedding pipeline implemented and run: 8,340 vectors in FAISS index.
+- FAISS validator implemented: all 9 checks PASS.
+- `src/embeddings/faiss_validator.py` and `scripts/validate_faiss.py` created.
+Status: Completed
+
+---
+
+## Session 14
+
+Completed: Phase 5 — Reranker Integration.
+
+**Files created:**
+- `src/reranking/__init__.py` — Package init with module docstring
+- `src/reranking/bge_reranker.py` — BAAI/bge-reranker-v2-m3 wrapper with `score()` and `rerank()` methods
+- `src/reranking/reranker.py` — Reranker orchestration class with `RerankerResult` dataclass, combined scoring (alpha * reranker + (1-alpha) * retrieval), ADR-015 compliance
+- `scripts/run_reranker_demo.py` — CLI demo entry point
+
+**Key implementation details:**
+- BGEReranker: same model-load pattern, device auto-selection, error handling as BGEEncoder
+- Reranker orchestrator: accepts FAISS metadata dicts directly, preserves original scores in type_metadata
+- CLI script: same sys.path fix, logging config, argparse pattern as existing scripts
+
+**Documentation updated:**
+- `PROJECT_MEMORY.md` — Phase 5 status, Session 14 entry, Current Working Task
+- `CHANGELOG.md` — Version 0.10.0
+
+**Next task:** Phase 4 Step 5 — Retrieval Engine (required before Phase 5 can be fully exercised).
 
 Status: Completed
 
@@ -438,6 +387,7 @@ Arabic normalization uses a dual-representation architecture (ADR-015). The cano
 - ~~`arabic_normalizer.py` is implemented but not wired into the ingestion pipeline~~ — Resolved in Phase 3.7 via ADR-015. Normalization is applied at embedding time only; the canonical corpus is never modified.
 - ~~Vector database not yet generated~~ — Resolved in Phase 4 Step 3. FAISS index (8,340 vectors × 1024 dims) generated and validated.
 - FAISS validation report available at `outputs/faiss/validation_report.json`.
+- Phase 4 Step 5 (Retrieval Engine) not yet implemented — needed before Reranker can be fully exercised with live retrieval data.
 - PDFBookParser not yet implemented (stub only — awaiting PDF source inspection). Al-Sanhuri PDFs acquired (14 files) — processing deferred to Phase 4.5.
 - CourtJudgmentParser not yet implemented (stub only — awaiting dataset acquisition).
 
@@ -468,9 +418,10 @@ Priority order:
 6. ~~Generate embeddings (BAAI/BGE-M3 on chunks.jsonl)~~ ✅
 7. ~~Build FAISS index~~ ✅
 8. ~~FAISS Validation~~ ✅
-9. Implement retriever ← NEXT
-10. Connect the LLM
-11. Evaluate retrieval quality
+9. ~~Implement Reranker (Phase 5)~~ ✅
+10. Implement retriever ← NEXT (Phase 4 Step 5, required before Reranker full integration)
+11. Connect the LLM
+12. Evaluate retrieval quality
 
 ---
 
