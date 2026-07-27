@@ -6,6 +6,31 @@ The project follows the principles of semantic versioning where applicable.
 
 ---
 
+# Version 0.9.1 — Phase 4 Step 2: Data Profiling Statistical Analysis Report
+
+**Status**
+
+Released
+
+**Date**
+
+July 2026
+
+## Added
+
+- **`reports/Data_Profiling_Statistical_Analysis_Report.md`**: Programmatically derived data profiling report of the ALSHAYEB LAW canonical corpus (sources, nodes, chunks). Key additions include:
+  - Exact counts: 481 sources, 1,455 nodes, 8,340 chunks.
+  - Length statistics (character & token) confirming 0.0% of chunks exceed the 512-token limit.
+  - Core metadata schema verification: 15 chunk fields and 7 type_metadata keys validated.
+  - Chunk-level scope flag distribution (`scope_flag`): 7,667 statute, 387 treaty, 270 case law, 16 uncertain.
+  - ID uniqueness and referential integrity audit (100% PASS).
+
+## Approval Gate
+
+Phase 4 Step 2 complete. Step 3 — Embedding Pipeline cleared to begin.
+
+---
+
 # Version 0.9.0 — Phase 4 Step 1: Architecture Design Document
 
 **Status**

@@ -8,13 +8,13 @@
 
 **Project Name:** ALSHAYEB LAW
 
-**Current Phase:** Phase 4 — Embedding Pipeline & Retrieval Engine (Step 1 Complete — Step 2 In Progress)
+**Current Phase:** Phase 4 — Embedding Pipeline & Retrieval Engine (Step 2 Complete — Step 3 Pending)
 
-**Overall Progress:** 60%
+**Overall Progress:** 65%
 
 **Status:** Active Development
 
-**Last Updated:** 2026-07-28 (Session 11)
+**Last Updated:** 2026-07-27 (Session 12)
 
 ---
 
@@ -114,7 +114,7 @@ Key architectural decisions documented:
 - Retrieval: `IndexFlatIP` exact search, scope_flag filter (ADR-013), Top-K with over-fetch
 - Scalability path: IndexFlatIP → IndexIVFFlat → IndexIVFPQ as corpus grows
 
-### Step 2 — Data Profiling: IN PROGRESS
+### Step 2 — Data Profiling: COMPLETE
 ### Step 3 — Embedding Pipeline: PENDING
 ### Step 4 — FAISS Validation: PENDING
 ### Step 5 — Retrieval Engine: PENDING
@@ -150,29 +150,27 @@ Future datasets:
 
 # Current Working Task
 
-Phase 4 — Step 2: Data Profiling Statistical Analysis Report.
+Phase 4 — Step 3: Embedding Pipeline Implementation. (Step 2 complete: `reports/Data_Profiling_Statistical_Analysis_Report.md` produced and verified.)
 
-Read actual corpus files:
-- `outputs/canonical/sources.jsonl` (481 records)
-- `outputs/canonical/nodes.jsonl` (1,455 records)
-- `outputs/canonical/chunks.jsonl` (8,340 records)
+Implement the following modules as specified in `docs/Phase4_Design_Document.md`:
 
-Produce: `reports/Data_Profiling_Statistical_Analysis_Report.md`
+- `src/embeddings/bge_encoder.py` — BAAI/bge-m3 wrapper with L2 normalization
+- `src/embeddings/faiss_store.py` — FAISS IndexFlatIP encapsulation
+- `src/embeddings/embedding_pipeline.py` — batch encode → checkpoint → write index + metadata + manifest
+- `scripts/run_embedding_pipeline.py` — CLI entry point
 
-All statistics must be derived from the actual corpus. No fabricated metrics.
-
-Architecture specification (from Step 1):
-- Model: BAAI/bge-m3 (1024-dim)
-- Index: FAISS IndexFlatIP with L2 normalization
-- Input: `outputs/canonical/chunks.jsonl` (8,340 chunks)
-- Output: `outputs/faiss/` (index.faiss + metadata.pkl + embedding_manifest.json)
-- Metadata: all 14 chunk fields preserved in metadata.pkl
-- ADR-015: normalize_arabic() applied before every encode call; never persisted
-- Scope filter: scope_flag field (ADR-013)
+Architecture constraints:
+- Apply `normalize_arabic()` to every chunk text before encoding (ADR-015)
+- Apply `normalize_arabic()` to every query before encoding (ADR-015)
+- Never persist normalized text — in-memory only
+- FAISS index type: `IndexFlatIP` with L2-normalized vectors
+- Checkpoint strategy: per-batch numpy arrays + checkpoint.json
+- Output: `outputs/faiss/index.faiss`, `outputs/faiss/metadata.pkl`, `outputs/faiss/embedding_manifest.json`
 
 Do not implement PDFBookParser or CourtJudgmentParser until the respective datasets are acquired and inspected.
 
 ---
+
 
 # AI Session Log
 
@@ -214,6 +212,25 @@ Status: Completed
 ## Session 6
 
 Completed: Architecture review. 89 duplicate chunk IDs found and fixed (slug collision + artX preamble collision). Monolithic pipeline refactored into generic framework: BaseParser, ParserRegistry, StatuteParser, PDFBookParser stub, CourtJudgmentParser stub, ingestion_orchestrator. Uniqueness guard added. Verified: 0 duplicate IDs.
+Status: Completed
+
+---
+
+## Session 12
+
+Completed: Phase 4 Step 2 — Data Profiling Statistical Analysis Report.
+
+**File created:**
+- `reports/Data_Profiling_Statistical_Analysis_Report.md` — Detailed statistical analysis of the canonical corpus sources, nodes, and chunks, including character/token length distributions, metadata analysis, and integrity verification.
+
+**Key findings recorded in report:**
+- Derived exact totals: 481 sources (all `StatuteParser`), 1,455 nodes (all `article` type), 8,340 chunks.
+- Verified chunk token counts: Min 7, Max 512, Mean 364.9, Median 429.0, StdDev 150.36. 
+- Over 61.8% of chunks fall within the 385–512 token range, optimizing context density.
+- 0 chunks exceed the 512-token limit (0.0%), validating chunking/sub-chunking constraints.
+- Documented chunk-level scope distribution (`scope_flag`): 7,667 statute (91.93%), 387 treaty (4.64%), 270 case law (3.24%), and 16 uncertain (0.19%).
+- Validated 100% ID uniqueness and referential integrity.
+
 Status: Completed
 
 ---
