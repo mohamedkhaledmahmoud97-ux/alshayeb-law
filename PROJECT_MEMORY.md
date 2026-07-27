@@ -8,13 +8,13 @@
 
 **Project Name:** ALSHAYEB LAW
 
-**Current Phase:** Phase 4 — Embedding Pipeline & Retrieval Engine (Step 2 Complete — Step 3 Pending)
+**Current Phase:** Phase 4 — Embedding Pipeline & Retrieval Engine (Steps 1-4 Complete — Step 5 Pending)
 
-**Overall Progress:** 65%
+**Overall Progress:** 70%
 
 **Status:** Active Development
 
-**Last Updated:** 2026-07-27 (Session 12)
+**Last Updated:** 2026-07-27 (Session 13)
 
 ---
 
@@ -115,17 +115,13 @@ Key architectural decisions documented:
 - Scalability path: IndexFlatIP → IndexIVFFlat → IndexIVFPQ as corpus grows
 
 ### Step 2 — Data Profiling: COMPLETE
-### Step 3 — Embedding Pipeline: PENDING
-### Step 4 — FAISS Validation: PENDING
+### Step 3 — Embedding Pipeline: COMPLETE
+### Step 4 — FAISS Validation: COMPLETE
 ### Step 5 — Retrieval Engine: PENDING
 
 ## Pending
 
-- Phase 4 — Embedding Pipeline (CLEARED — begin implementation)
-- Embedding pipeline must apply `normalize_arabic()` to chunk text before encoding (ADR-015)
-- Embedding pipeline must apply `normalize_arabic()` to user queries before encoding (ADR-015)
-- Vector database generation (FAISS index)
-- Retrieval pipeline
+- Phase 4 — Retrieval Engine (Step 5)
 - LLM integration
 - Evaluation framework
 - User interface
@@ -150,24 +146,20 @@ Future datasets:
 
 # Current Working Task
 
-Phase 4 — Step 3: Embedding Pipeline Implementation. (Step 2 complete: `reports/Data_Profiling_Statistical_Analysis_Report.md` produced and verified.)
+Phase 4 — Step 5: Retrieval Engine Implementation. (Steps 1-4 complete. FAISS index validated: all 9 checks PASS.)
 
 Implement the following modules as specified in `docs/Phase4_Design_Document.md`:
 
-- `src/embeddings/bge_encoder.py` — BAAI/bge-m3 wrapper with L2 normalization
-- `src/embeddings/faiss_store.py` — FAISS IndexFlatIP encapsulation
-- `src/embeddings/embedding_pipeline.py` — batch encode → checkpoint → write index + metadata + manifest
-- `scripts/run_embedding_pipeline.py` — CLI entry point
+- `src/retrieval/result_types.py` — RetrievalResult dataclass with chunk_id, score, rank, text, title, law_number, law_year, law_slug, scope_flag, section, article_number, seq, source_id, node_id
+- `src/retrieval/retriever.py` — Query → normalize_arabic() → encode → FAISS search (over-fetch k*3) → scope_flag filter → metadata reconstruction → ranked RetrievalResult list
 
 Architecture constraints:
-- Apply `normalize_arabic()` to every chunk text before encoding (ADR-015)
 - Apply `normalize_arabic()` to every query before encoding (ADR-015)
 - Never persist normalized text — in-memory only
 - FAISS index type: `IndexFlatIP` with L2-normalized vectors
-- Checkpoint strategy: per-batch numpy arrays + checkpoint.json
-- Output: `outputs/faiss/index.faiss`, `outputs/faiss/metadata.pkl`, `outputs/faiss/embedding_manifest.json`
-
-Do not implement PDFBookParser or CourtJudgmentParser until the respective datasets are acquired and inspected.
+- Over-fetch strategy: search k*3 candidates, apply scope_flag filter, return top_k
+- Top-K configurable; default 10
+- Return type: List[RetrievalResult]
 
 ---
 
@@ -230,6 +222,37 @@ Completed: Phase 4 Step 2 — Data Profiling Statistical Analysis Report.
 - 0 chunks exceed the 512-token limit (0.0%), validating chunking/sub-chunking constraints.
 - Documented chunk-level scope distribution (`scope_flag`): 7,667 statute (91.93%), 387 treaty (4.64%), 270 case law (3.24%), and 16 uncertain (0.19%).
 - Validated 100% ID uniqueness and referential integrity.
+
+Status: Completed
+
+---
+
+## Session 13
+
+Completed: Phase 4 Step 4 — FAISS Validation.
+
+**Files created:**
+- `src/embeddings/faiss_validator.py` — Comprehensive FAISS index validator with 9 independent checks: index load integrity, vector count, embedding dimension, metadata alignment, orphan metadata check, manifest consistency, index search integrity, metadata field presence, retrieval smoke test.
+- `scripts/validate_faiss.py` — CLI entry point with --verbose, --quiet, --exit-on-fail options. Writes machine-readable JSON report to `outputs/faiss/validation_report.json`.
+
+**Validation results (all 9 checks PASS):**
+| Check | Status |
+|---|---|
+| Index load integrity | ✅ PASS (ntotal=8340, dim=1024) |
+| Vector count | ✅ PASS (8340 == 8340) |
+| Embedding dimension | ✅ PASS (1024 == 1024) |
+| Metadata alignment | ✅ PASS (metadata count=8340 == ntotal=8340) |
+| Orphan metadata check | ✅ PASS (all 8340 entries valid) |
+| Manifest consistency | ✅ PASS (all 14 manifest fields consistent) |
+| Index search integrity | ✅ PASS (top-10 search OK) |
+| Metadata field presence | ✅ PASS (all 8340 entries contain 14 fields) |
+| Retrieval smoke test | ✅ PASS (5 Arabic queries returned valid results) |
+
+**Known Issues updated:**
+- ~~Vector database not yet generated~~ — Resolved. FAISS index, metadata, manifest, and validation report all present.
+- Added: FAISS validation report available at `outputs/faiss/validation_report.json`.
+
+**Next task:** Phase 4 Step 5 — Retrieval Engine.
 
 Status: Completed
 
@@ -404,7 +427,6 @@ Chunk denormalization (copying source metadata onto every chunk) is a deliberate
 Arabic normalization uses a dual-representation architecture (ADR-015). The canonical corpus is never modified. `normalize_arabic()` is applied only to the text passed to the embedding encoder — at document embedding time and at query embedding time. The normalized text is never persisted. This preserves legal citation fidelity while ensuring symmetric normalization between query and document vectors.
 
 ---
-
 # Known Issues
 
 - ~~89 duplicate chunk IDs~~ — Resolved in Session 6.
@@ -414,8 +436,9 @@ Arabic normalization uses a dual-representation architecture (ADR-015). The cano
 - ~~Scraper boilerplate not removed~~ — Resolved in Session 5.
 - ~~Longest chunk was 15,368 chars~~ — Resolved in Phase 3.6 (max chunk now 2,048 chars).
 - ~~`arabic_normalizer.py` is implemented but not wired into the ingestion pipeline~~ — Resolved in Phase 3.7 via ADR-015. Normalization is applied at embedding time only; the canonical corpus is never modified.
-- Vector database not yet generated.
-- PDFBookParser not yet implemented (stub only — awaiting PDF source inspection).
+- ~~Vector database not yet generated~~ — Resolved in Phase 4 Step 3. FAISS index (8,340 vectors × 1024 dims) generated and validated.
+- FAISS validation report available at `outputs/faiss/validation_report.json`.
+- PDFBookParser not yet implemented (stub only — awaiting PDF source inspection). Al-Sanhuri PDFs acquired (14 files) — processing deferred to Phase 4.5.
 - CourtJudgmentParser not yet implemented (stub only — awaiting dataset acquisition).
 
 ---
