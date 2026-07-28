@@ -1,3 +1,4 @@
+<img width="1254" height="1254" alt="image" src="https://github.com/user-attachments/assets/6894a612-fb62-4761-bfee-d1eb3640a1cd" />
 # ALSHAYEB LAW
 ## Egyptian Legal Retrieval-Augmented Generation Benchmark
 
