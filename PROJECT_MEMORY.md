@@ -8,13 +8,13 @@
 
 **Project Name:** ALSHAYEB LAW
 
-**Current Phase:** Phase 4 — Embedding Pipeline & Retrieval Engine (Steps 1-4 Complete — Step 5 Pending)
+**Current Phase:** Phase 4 — Embedding Pipeline & Retrieval Engine (Complete)
 
-**Overall Progress:** 70%
+**Overall Progress:** 80%
 
 **Status:** Active Development
 
-**Last Updated:** 2026-07-27 (Session 13)
+**Last Updated:** 2026-07-27 (Session 14)
 
 ---
 
@@ -98,7 +98,7 @@ All 15 engineering audit findings resolved or formally deferred.
 ADR-015 adopted: dual-representation Arabic normalization.
 Phase 4 cleared to begin.
 
-## Phase 4 — Embedding Pipeline & Retrieval Engine: IN PROGRESS
+## Phase 4 — Embedding Pipeline & Retrieval Engine: COMPLETE
 
 ### Step 1 — Architecture: COMPLETE
 
@@ -117,11 +117,10 @@ Key architectural decisions documented:
 ### Step 2 — Data Profiling: COMPLETE
 ### Step 3 — Embedding Pipeline: COMPLETE
 ### Step 4 — FAISS Validation: COMPLETE
-### Step 5 — Retrieval Engine: PENDING
+### Step 5 — Retrieval Engine: COMPLETE
 
 ## Pending
 
-- Phase 4 — Retrieval Engine (Step 5)
 - LLM integration
 - Evaluation framework
 - User interface
@@ -146,20 +145,23 @@ Future datasets:
 
 # Current Working Task
 
-Phase 4 — Step 5: Retrieval Engine Implementation. (Steps 1-4 complete. FAISS index validated: all 9 checks PASS.)
+Phase 4 — Step 5: Retrieval Engine Implementation. COMPLETE.
 
-Implement the following modules as specified in `docs/Phase4_Design_Document.md`:
+Files created:
+- `src/retrieval/result_types.py` — RetrievalResult dataclass with all 14 chunk fields + score, rank, type_metadata
+- `src/retrieval/retriever.py` — Retriever class implementing: normalize_arabic() → encode → FAISS search (over-fetch k*3) → scope_flag filter → metadata reconstruction → ranked RetrievalResult list
+- `src/retrieval/__init__.py` — Package exports
 
-- `src/retrieval/result_types.py` — RetrievalResult dataclass with chunk_id, score, rank, text, title, law_number, law_year, law_slug, scope_flag, section, article_number, seq, source_id, node_id
-- `src/retrieval/retriever.py` — Query → normalize_arabic() → encode → FAISS search (over-fetch k*3) → scope_flag filter → metadata reconstruction → ranked RetrievalResult list
-
-Architecture constraints:
-- Apply `normalize_arabic()` to every query before encoding (ADR-015)
-- Never persist normalized text — in-memory only
-- FAISS index type: `IndexFlatIP` with L2-normalized vectors
-- Over-fetch strategy: search k*3 candidates, apply scope_flag filter, return top_k
-- Top-K configurable; default 10
-- Return type: List[RetrievalResult]
+Architecture constraints satisfied:
+- ✅ `normalize_arabic()` applied to every query before encoding (ADR-015)
+- ✅ Normalized text never persisted — in-memory only
+- ✅ FAISS index type: `IndexFlatIP` with L2-normalized vectors
+- ✅ Over-fetch strategy: search k*3 candidates, apply scope_flag filter, return top_k
+- ✅ Top-K configurable; default 10
+- ✅ Return type: List[RetrievalResult]
+- ✅ scope_flag filtering (ADR-013)
+- ✅ Metadata alignment validated at construction time
+- ✅ No modifications to completed Phase 3, 4, or 5 components
 
 ---
 
@@ -227,32 +229,34 @@ Status: Completed
 
 ---
 
-## Session 13
+## Session 14
 
-Completed: Phase 4 Step 4 — FAISS Validation.
+Completed: Phase 4 Step 5 — Retrieval Engine Integration.
 
 **Files created:**
-- `src/embeddings/faiss_validator.py` — Comprehensive FAISS index validator with 9 independent checks: index load integrity, vector count, embedding dimension, metadata alignment, orphan metadata check, manifest consistency, index search integrity, metadata field presence, retrieval smoke test.
-- `scripts/validate_faiss.py` — CLI entry point with --verbose, --quiet, --exit-on-fail options. Writes machine-readable JSON report to `outputs/faiss/validation_report.json`.
+- `src/retrieval/result_types.py` — RetrievalResult dataclass with fields: chunk_id, score, rank, text, title, law_number, law_year, law_slug, scope_flag, section, article_number, seq, source_id, node_id, type_metadata.
+- `src/retrieval/retriever.py` — Retriever class implementing the full retrieval lifecycle:
+  1. normalize_arabic(query) — in-memory only (ADR-015)
+  2. Encode normalized query with BGEEncoder
+  3. FAISS similarity search with over-fetch (k × 3)
+  4. Reconstruct full chunk metadata from metadata.pkl
+  5. Apply scope_flag filter (ADR-013)
+  6. Sort by score descending and assign ranks
+  7. Return List[RetrievalResult]
+- `src/retrieval/__init__.py` — Package init exporting Retriever and RetrievalResult.
 
-**Validation results (all 9 checks PASS):**
-| Check | Status |
-|---|---|
-| Index load integrity | ✅ PASS (ntotal=8340, dim=1024) |
-| Vector count | ✅ PASS (8340 == 8340) |
-| Embedding dimension | ✅ PASS (1024 == 1024) |
-| Metadata alignment | ✅ PASS (metadata count=8340 == ntotal=8340) |
-| Orphan metadata check | ✅ PASS (all 8340 entries valid) |
-| Manifest consistency | ✅ PASS (all 14 manifest fields consistent) |
-| Index search integrity | ✅ PASS (top-10 search OK) |
-| Metadata field presence | ✅ PASS (all 8340 entries contain 14 fields) |
-| Retrieval smoke test | ✅ PASS (5 Arabic queries returned valid results) |
+**Architecture constraints satisfied:**
+- ✅ ADR-015: normalize_arabic() applied to every query before encoding; normalized text never persisted
+- ✅ ADR-013: scope_flag filtering with over-fetch to maintain top-k count
+- ✅ FAISS IndexFlatIP with L2-normalized vectors (cosine similarity)
+- ✅ Metadata alignment validated at construction time (len(metadata) == ntotal)
+- ✅ No modifications to completed Phase 3, Phase 4, or Phase 5 components
+- ✅ BGEEncoder reused without modification
+- ✅ FAISSStore reused without modification
 
-**Known Issues updated:**
-- ~~Vector database not yet generated~~ — Resolved. FAISS index, metadata, manifest, and validation report all present.
-- Added: FAISS validation report available at `outputs/faiss/validation_report.json`.
+**Phase 4 Status:** COMPLETE (all 5 steps finished).
 
-**Next task:** Phase 4 Step 5 — Retrieval Engine.
+**Next task:** Phase 5 — Reranker Integration (already implemented; integration pending) or Phase 6 — LLM Integration.
 
 Status: Completed
 
@@ -468,7 +472,7 @@ Priority order:
 6. ~~Generate embeddings (BAAI/BGE-M3 on chunks.jsonl)~~ ✅
 7. ~~Build FAISS index~~ ✅
 8. ~~FAISS Validation~~ ✅
-9. Implement retriever ← NEXT
+9. ~~Implement retriever~~ ✅
 10. Connect the LLM
 11. Evaluate retrieval quality
 
