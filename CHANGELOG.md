@@ -6,6 +6,49 @@ The project follows the principles of semantic versioning where applicable.
 
 ---
 
+# Version 0.9.3 — Phase 4 Step 5: Retrieval Engine Integration
+
+**Status**
+
+Released
+
+**Date**
+
+July 2026
+
+## Added
+
+- **`src/retrieval/result_types.py`**: `RetrievalResult` dataclass with fields: `chunk_id`, `score`, `rank`, `text`, `title`, `law_number`, `law_year`, `law_slug`, `scope_flag`, `section`, `article_number`, `seq`, `source_id`, `node_id`, `type_metadata`. Preserves all 14 chunk fields for citation fidelity and downstream reranking.
+
+- **`src/retrieval/retriever.py`**: `Retriever` class implementing the complete dense retrieval lifecycle:
+  1. `normalize_arabic(query)` — in-memory only (ADR-015)
+  2. Encode normalized query with existing `BGEEncoder`
+  3. FAISS similarity search with over-fetch (k × 3) on existing `IndexFlatIP`
+  4. Reconstruct full chunk metadata from `metadata.pkl`
+  5. Apply `scope_flag` filter (ADR-013)
+  6. Sort by score descending and assign ranks
+  7. Return `List[RetrievalResult]`
+
+- **`src/retrieval/__init__.py`**: Package init exporting `Retriever` and `RetrievalResult`.
+
+## Architecture Constraints Satisfied
+
+- ✅ `normalize_arabic()` applied to every query before encoding (ADR-015)
+- ✅ Normalized text never persisted — in-memory only
+- ✅ FAISS IndexFlatIP with L2-normalized vectors (cosine similarity)
+- ✅ Over-fetch strategy: search k×3 candidates, apply scope_flag filter, return top_k
+- ✅ Top-K configurable; default 10
+- ✅ Return type: `List[RetrievalResult]`
+- ✅ `scope_flag` filtering (ADR-013)
+- ✅ Metadata alignment validated at construction time
+- ✅ No modifications to completed Phase 3, Phase 4, or Phase 5 components
+
+## Approval Gate
+
+Phase 4 Step 5 complete. Phase 4 fully complete.
+
+---
+
 # Version 0.9.2 — Phase 4 Step 4: FAISS Validation
 
 **Status**
@@ -286,8 +329,8 @@ July 2026
 ## Fixed
 
 - 89 duplicate chunk IDs caused by two independent bugs:
-  1. Slug collisions: same law_number+year appearing under two title formats both yielded the same base slug. Fixed by appending a per-slug counter on collision (law-18-2019, law-18-2019-2, …).
-  2. artX preamble collision: multiple preamble chunks within the same section all received `artX`. Fixed by using a per-section preamble counter (artX1, artX2, …).
+  1. Slug collisions: same law_number+year appearing under two title formats both yielded the same base slug. Fixed by appending a per-slug counter on collision (law-18-2019, law-18-2019-2, ...).
+  2. artX preamble collision: multiple preamble chunks within the same section all received `artX`. Fixed by using a per-section preamble counter (artX1, artX2, ...).
 
 ## Verified Output
 
